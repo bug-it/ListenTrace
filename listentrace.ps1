@@ -13,10 +13,10 @@ Write-Host @"
 
 $SearchPort = "443"
 $SearchIP   = "127.0.0.1"
-$SearchKey  = "Porta"
+$SearchKey  = "Porta","Port"
 
 $BasePath = "C:\Windows\"
-$Extensions = @("*.conf","*.cfg","*.ini","*.json","*.yaml","*.yml","*.xml","*.env","*.toml","*.py","*.js")
+$Extensions = @("*.conf","*.cfg","*.ini","*.json","*.yaml","*.yml","*.xml","*.env","*.log","*.py","*.js")
 
 $SnippetSize = 160
 
@@ -93,3 +93,4 @@ ForEach-Object {
 Write-Host ""
 Write-Host "✅ Busca concluída com correlação total de critérios" -ForegroundColor Green
 Write-Host ""
+Pause
