@@ -1,11 +1,5 @@
 # ================================
-# ListenTrace - Auditoria Correlacionada
-# ================================
-
-Clear-Host
-
-# ================================
-# BANNER
+# Banner
 # ================================
 Write-Host "+==========================================+" -ForegroundColor Yellow
 Write-Host "+  ListenTrace - Auditoria Correlacionada  +" -ForegroundColor Yellow
@@ -13,97 +7,92 @@ Write-Host "+==========================================+" -ForegroundColor Yello
 Write-Host ""
 
 # ================================
-# 🔧 CRITÉRIOS ("" ou $null para ignorar)
+# Configuracoes de Busca
 # ================================
 $SearchPort = "443"
 $SearchIP   = "127.0.0.1"
 $SearchKey  = @("Porta","Port","Listen")
 
-$RootPath   = "C:\Windows"
+$DiretorioBase = "C:\Windows"
 
-# Extensões de texto permitidas
-$TextExtensions = @(
-    ".txt",".log",".conf",".cfg",".ini",".xml",
-    ".json",".yaml",".yml",".ps1",".psm1"
+$ExtensoesTexto = @(
+    ".txt",".log",".conf",".cfg",".ini",
+    ".xml",".json",".yaml",".yml",
+    ".ps1",".psm1"
 )
 
 # ================================
-# STATUS ATIVO
+# Status Ativo
 # ================================
 Write-Host "🔎 BUSCADOR ATIVO" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "🟦 Porta : $SearchPort" -ForegroundColor Blue
-Write-Host "🟨 IP    : $SearchIP"   -ForegroundColor Yellow
+Write-Host "🟨 IP    : $SearchIP" -ForegroundColor Yellow
 Write-Host "🟩 Chave : $($SearchKey -join ', ')" -ForegroundColor Green
-Write-Host "📂 Diretório: $RootPath"
+Write-Host "📂 Diretório: $DiretorioBase"
 Write-Host "==================================================" -ForegroundColor DarkGray
 Write-Host ""
 
 # ================================
-# FUNÇÃO PRINCIPAL
+# Varredura de Arquivos
 # ================================
-function Buscar-Ativos {
-    param (
-        [string]$Arquivo
-    )
+Get-ChildItem -Path $DiretorioBase -Recurse -File -ErrorAction SilentlyContinue |
+Where-Object {
+    $ExtensoesTexto -contains $_.Extension.ToLower()
+} |
+ForEach-Object {
 
-    $LinhaNumero = 0
+    $arquivo = $_.FullName
+    $linhaNum = 0
 
-    Get-Content -LiteralPath $Arquivo -ErrorAction SilentlyContinue | ForEach-Object {
+    Write-Host "📁 Pasta   : $($_.DirectoryName)" -ForegroundColor Cyan
+    Write-Host "📄 Arquivo : $($_.Name)" -ForegroundColor White
+    Write-Host "--------------------------------------------------" -ForegroundColor DarkGray
 
-        $LinhaNumero++
-        $Linha = $_
-        $Encontrou = $false
-        $TipoMatch = ""
+    Get-Content $arquivo -ErrorAction SilentlyContinue | ForEach-Object {
 
-        if ($SearchPort -and $Linha -match "(?<!\d)$SearchPort(?!\d)") {
-            $Encontrou = $true
-            $TipoMatch = "Porta ($SearchPort)"
+        $linhaNum++
+        $linha = $_
+        $achou = $false
+        $tipo  = ""
+
+        if ($SearchPort -and $linha -match $SearchPort) {
+            $achou = $true
+            $tipo  = "Porta ($SearchPort)"
         }
 
-        if (-not $Encontrou -and $SearchIP -and $Linha -match [regex]::Escape($SearchIP)) {
-            $Encontrou = $true
-            $TipoMatch = "IP ($SearchIP)"
+        if (-not $achou -and $SearchIP -and $linha -match $SearchIP) {
+            $achou = $true
+            $tipo  = "IP ($SearchIP)"
         }
 
-        if (-not $Encontrou) {
-            foreach ($Key in $SearchKey) {
-                if ($Linha -match "(?i)\b$Key\b") {
-                    $Encontrou = $true
-                    $TipoMatch = "Chave ($Key)"
+        if (-not $achou) {
+            foreach ($chave in $SearchKey) {
+                if ($linha -match $chave) {
+                    $achou = $true
+                    $tipo  = "Chave ($chave)"
                     break
                 }
             }
         }
 
-        if ($Encontrou) {
-            Write-Host "🔢 Linha $LinhaNumero :" -ForegroundColor Magenta
-            Write-Host "   $Linha"
+        if ($achou) {
+            Write-Host "🔢 Linha $linhaNum :" -ForegroundColor Magenta
+            Write-Host "   $linha"
             Write-Host "--------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "🧷 ATIVO   : $TipoMatch" -ForegroundColor Green
+            Write-Host "🧷 ATIVO   : $tipo" -ForegroundColor Green
             Write-Host ""
         }
     }
 }
 
 # ================================
-# VARREDURA
-# ================================
-Get-ChildItem -Path $RootPath -Recurse -File -ErrorAction SilentlyContinue |
-Where-Object {
-    $TextExtensions -contains $_.Extension.ToLower()
-} |
-ForEach-Object {
-
-    Write-Host "📁 Pasta   : $($_.DirectoryName)" -ForegroundColor Cyan
-    Write-Host "📄 Arquivo : $($_.Name)" -ForegroundColor White
-    Write-Host "--------------------------------------------------" -ForegroundColor DarkGray
-
-    Buscar-Ativos -Arquivo $_.FullName
-}
-
-# ================================
-# FINALIZAÇÃO
+# Finalizacao
 # ================================
 Write-Host ""
-Write-Host "✅ Varredura finalizada com sucesso." -ForegroundColor Green
+Write-Host "+==========================================+" -ForegroundColor Green
+Write-Host "+      Varredura finalizada com sucesso    +" -ForegroundColor Green
+Write-Host "+==========================================+" -ForegroundColor Green
+Write-Host ""
+
+pause
