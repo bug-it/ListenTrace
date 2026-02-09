@@ -2,6 +2,9 @@
 
 🔍 Buscador Avançado de Configurações (PowerShell)
 
+<img width="1104" height="1022" alt="image" src="https://github.com/user-attachments/assets/8356047f-2573-4058-b936-3cd02160e777" />
+
+
 Ferramenta em PowerShell para auditoria, troubleshooting e análise de arquivos de configuração, com correlação inteligente por arquivo e redução agressiva de falsos positivos.
 
 O ListenTrace localiza porta, IP e/ou palavra-chave apenas quando todos os critérios ativos coexistem no mesmo arquivo, evitando resultados irrelevantes comuns em buscas linha-a-linha.
