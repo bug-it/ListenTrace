@@ -1,16 +1,9 @@
 Clear-Host
 
-# ================= BANNER (NÃO ALTERAR) =================
-Write-Host @"
- _      _     _          _______
-| |    (_)   | |        |__   __|
-| |     _ ___| |_ ___ _ __ | |_ __ __ _  ___ ___
-| |    | / __| __/ _ \ '_ \| | '__/ _ |/ __/ _ \
-| |____| \__ \ |_  __/ | | | | | | (_| | (__  __/
-|______|_|___/\__\___|_| |_|_|_|  \__,_|\___\___|
-ListenTrace - Auditoria Correlacionada
-==================================================
-"@ -ForegroundColor Cyan
+Write-Host "+==========================================+" -ForegroundColor Yellow
+Write-Host "+  ListenTrace - Auditoria Correlacionada  +" -ForegroundColor Yellow
+Write-Host "+==========================================+" -ForegroundColor Yellow
+Write-Host ""
 
 # ================= CONFIGURAÇÕES =================
 
