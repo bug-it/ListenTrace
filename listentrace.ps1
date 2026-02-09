@@ -1,113 +1,53 @@
 Clear-Host
 
+# ================= BANNER =================
 Write-Host "+==========================================+" -ForegroundColor Yellow
 Write-Host "+  ListenTrace - Auditoria Correlacionada  +" -ForegroundColor Yellow
 Write-Host "+==========================================+" -ForegroundColor Yellow
 Write-Host ""
 
-# ================= CONFIGURAÇÕES =================
+# ================= CONFIG =================
+$Porta     = 443
+$IP        = "127.0.0.1"
+$Chaves    = @("Port", "Porta", "Listen")
+$Diretorio = "C:\Windows"
 
-# 🔧 Critérios ("" ou $null para ignorar)
-$SearchPort = "443"
-$SearchIP   = "127.0.0.1"
-$SearchKey  = @("Porta","Port","Listen")
-
-$BasePath = "C:\Windows"
-
-# 📄 Somente arquivos de texto
-$Extensions = @(
-    "*.conf","*.cfg","*.ini","*.json","*.yaml","*.yml",
-    "*.xml","*.env","*.log","*.txt","*.ps1","*.py","*.js"
-)
-
-$SnippetSize = 160
-
-# ================= REGEX =================
-
-$RegexPort = if ($SearchPort) {
-    "(?i)\b$([regex]::Escape($SearchPort))\b"
-}
-
-$RegexIP = if ($SearchIP) {
-    "(?i)\b$([regex]::Escape($SearchIP))\b"
-}
-
-$RegexKey = if ($SearchKey -and $SearchKey.Count -gt 0) {
-    "(?i)\b(" + ($SearchKey | ForEach-Object { [regex]::Escape($_) }) -join "|" + ")\b"
-}
-
-$ActiveRules = @($RegexPort,$RegexIP,$RegexKey) | Where-Object { $_ }
-
-if ($ActiveRules.Count -eq 0) {
-    Write-Host "Nenhum critério definido." -ForegroundColor Red
-    Pause
-    exit
-}
-
-# ================= CABEÇALHO =================
-
+# ================= HEADER =================
+Write-Host "🔎 BUSCADOR ATIVO" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "🔎 BUSCADOR ATIVO" -ForegroundColor White
+Write-Host "🟦 Porta : $Porta" -ForegroundColor Blue
+Write-Host "🟨 IP    : $IP" -ForegroundColor Yellow
+Write-Host "🟩 Chave : $($Chaves -join ', ')" -ForegroundColor Green
+Write-Host "📂 Diretório: $Diretorio" -ForegroundColor Magenta
+Write-Host "=================================================="
 Write-Host ""
-if ($SearchPort) { Write-Host "🟦 Porta : $SearchPort" -ForegroundColor Yellow }
-if ($SearchIP)   { Write-Host "🟨 IP    : $SearchIP"   -ForegroundColor Green }
-if ($SearchKey)  { Write-Host "🟩 Chave : $($SearchKey -join ', ')" -ForegroundColor Cyan }
-Write-Host "📂 Diretório: $BasePath" -ForegroundColor DarkGray
-Write-Host "==================================================" -ForegroundColor DarkGray
-Write-Host ""
+
+# ================= FUNÇÃO =================
+function Buscar-Chaves {
+    param (
+        [string]$Arquivo
+    )
+
+    $linhaNum = 0
+
+    Get-Content $Arquivo -ErrorAction SilentlyContinue | ForEach-Object {
+        $linhaNum++
+        foreach ($chave in $Chaves) {
+            if ($_ -match $chave) {
+                Write-Host "🔢 Linha $linhaNum :" -ForegroundColor Cyan
+                Write-Host " $_" -ForegroundColor White
+                Write-Host "🧷 ATIVO   : Chave ($chave)" -ForegroundColor Green
+                Write-Host "--------------------------------------------------"
+            }
+        }
+    }
+}
 
 # ================= EXECUÇÃO =================
-
-Get-ChildItem -Path $BasePath -Recurse -File -Include $Extensions -ErrorAction SilentlyContinue |
+Get-ChildItem -Path $Diretorio -Recurse -File -ErrorAction SilentlyContinue |
 ForEach-Object {
-
-    try {
-        $Content = Get-Content $_.FullName -Encoding UTF8 -ErrorAction Stop
-    } catch {
-        return
-    }
-
-    # valida correlação (TODOS os critérios no mesmo arquivo)
-    foreach ($Rule in $ActiveRules) {
-        if (-not ($Content -match $Rule)) {
-            return
-        }
-    }
-
-    Write-Host "📁 Pasta   : $($_.DirectoryName)" -ForegroundColor Gray
-    Write-Host "📄 Arquivo : $($_.Name)" -ForegroundColor Cyan
-    Write-Host "--------------------------------------------------" -ForegroundColor DarkGray
-
-    $LineNumber = 0
-
-    foreach ($Line in $Content) {
-        $LineNumber++
-
-        $MatchPort = $RegexPort -and ($Line -match $RegexPort)
-        $MatchIP   = $RegexIP   -and ($Line -match $RegexIP)
-        $MatchKey  = $RegexKey  -and ($Line -match $RegexKey)
-
-        if ($MatchPort -or $MatchIP -or $MatchKey) {
-
-            $Out = $Line.Trim()
-            if ($Out.Length -gt $SnippetSize) {
-                $Out = $Out.Substring(0,$SnippetSize) + "..."
-            }
-
-            Write-Host "🔢 Linha $LineNumber :" -ForegroundColor DarkGray
-            Write-Host "   $Out" -ForegroundColor White
-
-            if ($MatchPort) { Write-Host "🧷 ATIVO   : Porta ($SearchPort)" -ForegroundColor Yellow }
-            if ($MatchIP)   { Write-Host "🧷 ATIVO   : IP ($SearchIP)"     -ForegroundColor Green }
-            if ($MatchKey)  { Write-Host "🧷 ATIVO   : Chave ($($Matches[0]))" -ForegroundColor Cyan }
-
-            Write-Host "--------------------------------------------------" -ForegroundColor DarkGray
-        }
-    }
-
-    Write-Host ""
+    Buscar-Chaves $_.FullName
 }
 
-Write-Host "Varredura finalizada com sucesso." -ForegroundColor Green
 Write-Host ""
-Pause
+Write-Host "✅ Varredura finalizada." -ForegroundColor Green
