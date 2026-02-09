@@ -3,23 +3,23 @@ Clear-Host
 # ================== CONFIGURACAO ==================
 $DiretorioRaiz = "C:\Windows"
 
-$PortaBusca = "443"
-$IPBusca    = ""
+$PortaBusca = "22"
+$IPBusca    = "127.0.0.1"
 $DNSBusca   = ""
 
 $PalavrasChave = @(
-    "",
+    "Windows",
     $IPBusca,
     $DNSBusca,
     $PortaBusca
 )
 
-$Extensoes = "*.log","*.txt","*.ini","*.ps1","*.inf"
+$Extensoes = "*.log","*.txt","*.ini","*.ps1","*.inf","*.json","*.py"
 # ==================================================
 
 # ================== BANNER ==================
 Write-Host "============================================================" -ForegroundColor DarkGray
-Write-Host " ListenTrace - Auditoria Forense Correlacionada" -ForegroundColor Cyan
+Write-Host "+                 ListenTrace - Auditoria                  +" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor DarkGray
 Write-Host ""
 
