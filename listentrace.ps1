@@ -1,125 +1,99 @@
 Clear-Host
 
+# ==========================================================
+# ASCII ART — IDENTIDADE LISTENTRACE
+# ==========================================================
 Write-Host @"
  _      _     _          _______
 | |    (_)   | |        |__   __|
 | |     _ ___| |_ ___ _ __ | |_ __ __ _  ___ ___
-| |    | / __| __/ _ \ '_ \| | '__/ _` |/ __/ _ \
+| |    | / __| __/ _ \ '_ \| | '__/ _ |/ __/ _ \
 | |____| \__ \ |_  __/ | | | | | | (_| | (__  __/
 |______|_|___/\__\___|_| |_|_|_|  \__,_|\___\___|
 "@ -ForegroundColor Cyan
 
-# ================= CONFIGURAÇÕES =================
+Write-Host "                         Auditoria Correlacionada" -ForegroundColor DarkCyan
+Write-Host "══════════════════════════════════════════════════════" -ForegroundColor DarkGray
+Write-Host ""
 
-# 🔧 Critérios ("" ou $null = ignora)
+# ==========================================================
+# 🔧 Critérios (deixe "" ou $null para ignorar)
+# ==========================================================
 $SearchPort = "443"
 $SearchIP   = "127.0.0.1"
 $SearchKey  = @("Porta","Port","Listen")
 
-$BasePath = "C:\Windows"
-$Extensions = @(
-    "*.conf","*.cfg","*.ini","*.json","*.yaml","*.yml",
-    "*.xml","*.env","*.log","*.py","*.js","*.ps1"
-)
+# 📂 Diretório alvo
+$TargetPath = "C:\Windows"
 
-$SnippetSize = 160
+# ==========================================================
+# 🎯 Validação de critérios ativos
+# ==========================================================
+$ActiveCriteria = @()
 
-# ================= REGEX =================
+if ($SearchPort -and $SearchPort -ne "") { $ActiveCriteria += "PORT" }
+if ($SearchIP   -and $SearchIP   -ne "") { $ActiveCriteria += "IP" }
+if ($SearchKey  -and $SearchKey.Count -gt 0) { $ActiveCriteria += "KEY" }
 
-# 🔑 Palavras-chave
-$RegexKey = $null
-$RegexPort = $null
-$RegexIP = $null
-
-if ($SearchKey -and $SearchKey.Count -gt 0) {
-    $KeysEscaped = $SearchKey | ForEach-Object { [regex]::Escape($_) }
-    $KeysPattern = ($KeysEscaped -join "|")
-    $RegexKey = "(?i)\b($KeysPattern)\b"
+if ($ActiveCriteria.Count -eq 0) {
+    Write-Host "❌ Nenhum critério definido. Abortando." -ForegroundColor Red
+    return
 }
 
-# 🔢 Porta vinculada às palavras-chave
-if ($SearchPort -and $RegexKey) {
-    $RegexPort = "(?i)\b($KeysPattern)\b\s*[:=]?\s*[""' ]*$SearchPort[""' ]*(?!\d)"
+# ==========================================================
+# 🧠 Regex simples e objetiva
+# ==========================================================
+$RegexPort = if ($SearchPort) { [regex]::Escape($SearchPort) }
+$RegexIP   = if ($SearchIP)   { [regex]::Escape($SearchIP) }
+$RegexKey  = if ($SearchKey)  {
+    (($SearchKey | ForEach-Object { [regex]::Escape($_) }) -join "|")
 }
 
-# 🌐 IP
-if ($SearchIP) {
-    $RegexIP = "(?i)\b$([regex]::Escape($SearchIP))\b"
-}
-
-# 🔒 Regras ativas
-$ActiveRules = @($RegexKey,$RegexPort,$RegexIP) | Where-Object { $_ }
-
-if ($ActiveRules.Count -eq 0) {
-    Write-Host "❌ Nenhum critério definido" -ForegroundColor Red
-    Pause
-    exit
-}
-
-# ================= HEADER =================
-
-Write-Host ""
-Write-Host "══════════════════════════════════════════════════════" -ForegroundColor DarkGray
+# ==========================================================
+# 📊 Painel de critérios
+# ==========================================================
 Write-Host " 🔎 BUSCADOR ATIVO" -ForegroundColor White
 Write-Host ""
-
-if ($SearchPort) { Write-Host " 🟦 Porta : $SearchPort" -ForegroundColor Yellow }
-if ($SearchIP)   { Write-Host " 🟨 IP    : $SearchIP" -ForegroundColor Green }
-if ($SearchKey)  { Write-Host " 🟩 Chave : $($SearchKey -join ', ')" -ForegroundColor Cyan }
-
-Write-Host " 📂 Diretório: $BasePath" -ForegroundColor DarkGray
+Write-Host " 🟦 Porta : $SearchPort" -ForegroundColor Cyan
+Write-Host " 🟨 IP    : $SearchIP"   -ForegroundColor Green
+Write-Host " 🟩 Chave : $($SearchKey -join ', ')" -ForegroundColor Yellow
+Write-Host " 📂 Diretório: $TargetPath" -ForegroundColor Gray
 Write-Host "══════════════════════════════════════════════════════" -ForegroundColor DarkGray
 Write-Host ""
 
-# ================= EXECUÇÃO =================
-
-Get-ChildItem $BasePath -Recurse -File -Include $Extensions -ErrorAction SilentlyContinue |
+# ==========================================================
+# 🔍 Varredura correlacionada real
+# ==========================================================
+Get-ChildItem -Path $TargetPath -Recurse -File -ErrorAction SilentlyContinue |
 ForEach-Object {
 
-    # evita arquivos grandes/binários
-    if ($_.Length -gt 5MB) { return }
-
     try {
-        $Content = Get-Content $_.FullName -Encoding UTF8 -ErrorAction Stop
+        $Content = Get-Content $_.FullName -Raw -ErrorAction Stop
     } catch {
         return
     }
 
-    # exige TODAS as regras no mesmo arquivo
-    foreach ($Rule in $ActiveRules) {
-        if (-not ($Content -match $Rule)) { return }
+    $MatchPort = $false
+    $MatchIP   = $false
+    $MatchKey  = $false
+
+    if ($RegexPort) { $MatchPort = $Content -match $RegexPort }
+    if ($RegexIP)   { $MatchIP   = $Content -match $RegexIP }
+    if ($RegexKey)  { $MatchKey  = $Content -match $RegexKey }
+
+    # 🧠 Regra de correlação absoluta
+    $Valid = $true
+    if ($ActiveCriteria -contains "PORT" -and -not $MatchPort) { $Valid = $false }
+    if ($ActiveCriteria -contains "IP"   -and -not $MatchIP)   { $Valid = $false }
+    if ($ActiveCriteria -contains "KEY"  -and -not $MatchKey)  { $Valid = $false }
+
+    if ($Valid) {
+        Write-Host "📄 MATCH: $($_.FullName)" -ForegroundColor Green
+        if ($MatchPort) { Write-Host "   ✔ Porta encontrada" -ForegroundColor Blue }
+        if ($MatchIP)   { Write-Host "   ✔ IP encontrado" -ForegroundColor Yellow }
+        if ($MatchKey)  { Write-Host "   ✔ Palavra-chave encontrada" -ForegroundColor Cyan }
+        Write-Host ""
     }
-
-    Write-Host "📁 Pasta   :" -NoNewline -ForegroundColor DarkGray
-    Write-Host " $($_.DirectoryName)" -ForegroundColor Gray
-
-    Write-Host "📄 Arquivo :" -NoNewline -ForegroundColor DarkGray
-    Write-Host " $($_.Name)" -ForegroundColor Cyan
-
-    $LineNumber = 0
-    foreach ($Line in $Content) {
-        $LineNumber++
-
-        if (
-            ($RegexKey  -and $Line -match $RegexKey)  -or
-            ($RegexPort -and $Line -match $RegexPort) -or
-            ($RegexIP   -and $Line -match $RegexIP)
-        ) {
-            $Out = $Line.Trim()
-            if ($Out.Length -gt $SnippetSize) {
-                $Out = $Out.Substring(0,$SnippetSize) + "..."
-            }
-
-            Write-Host "🔢 Linha $LineNumber :" -ForegroundColor DarkGray
-            Write-Host "   $Out" -ForegroundColor White
-        }
-    }
-
-    Write-Host "──────────────────────────────────────────────────────" -ForegroundColor DarkGray
-    Write-Host ""
 }
 
-Write-Host ""
-Write-Host "✅ Busca concluída com correlação total de critérios" -ForegroundColor Green
-Write-Host ""
-Pause
+Write-Host "✅ Varredura finalizada com sucesso." -ForegroundColor Green
