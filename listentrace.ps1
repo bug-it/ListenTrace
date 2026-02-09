@@ -1,98 +1,95 @@
-# ================================
-# Banner
-# ================================
-Write-Host "+==========================================+" -ForegroundColor Yellow
-Write-Host "+  ListenTrace - Auditoria Correlacionada  +" -ForegroundColor Yellow
-Write-Host "+==========================================+" -ForegroundColor Yellow
-Write-Host ""
+Clear-Host
 
-# ================================
-# Configuracoes de Busca
-# ================================
-$SearchPort = "443"
-$SearchIP   = "127.0.0.1"
-$SearchKey  = @("Porta","Port","Listen")
+# ================== CONFIGURACAO ==================
+$DiretorioRaiz = "C:\Windows"
 
-$DiretorioBase = "C:\Windows"
+$PortaBusca = "443"
+$IPBusca    = ""
+$DNSBusca   = ""
 
-$ExtensoesTexto = @(
-    ".txt",".log",".conf",".cfg",".ini",
-    ".xml",".json",".yaml",".yml",
-    ".ps1",".psm1"
+$PalavrasChave = @(
+    "",
+    $IPBusca,
+    $DNSBusca,
+    $PortaBusca
 )
 
-# ================================
-# Status Ativo
-# ================================
-Write-Host "🔎 BUSCADOR ATIVO" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "🟦 Porta : $SearchPort" -ForegroundColor Blue
-Write-Host "🟨 IP    : $SearchIP" -ForegroundColor Yellow
-Write-Host "🟩 Chave : $($SearchKey -join ', ')" -ForegroundColor Green
-Write-Host "📂 Diretório: $DiretorioBase"
-Write-Host "==================================================" -ForegroundColor DarkGray
+$Extensoes = "*.log","*.txt","*.ini","*.ps1","*.inf"
+# ==================================================
+
+# ================== BANNER ==================
+Write-Host "============================================================" -ForegroundColor DarkGray
+Write-Host " ListenTrace - Auditoria Forense Correlacionada" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor DarkGray
 Write-Host ""
 
-# ================================
-# Varredura de Arquivos
-# ================================
-Get-ChildItem -Path $DiretorioBase -Recurse -File -ErrorAction SilentlyContinue |
-Where-Object {
-    $ExtensoesTexto -contains $_.Extension.ToLower()
-} |
+# ================== BUSCA ==================
+Get-ChildItem -Path $DiretorioRaiz -Recurse -File -Include $Extensoes -ErrorAction SilentlyContinue |
 ForEach-Object {
 
-    $arquivo = $_.FullName
-    $linhaNum = 0
+    $Arquivo = $_
+    $LinhaNum = 0
+    $Evidencia = $null
 
-    Write-Host "📁 Pasta   : $($_.DirectoryName)" -ForegroundColor Cyan
-    Write-Host "📄 Arquivo : $($_.Name)" -ForegroundColor White
-    Write-Host "--------------------------------------------------" -ForegroundColor DarkGray
+    try {
+        Get-Content $Arquivo.FullName -ErrorAction Stop | ForEach-Object {
 
-    Get-Content $arquivo -ErrorAction SilentlyContinue | ForEach-Object {
+            $LinhaNum++
+            $LinhaTexto = $_.Trim()
 
-        $linhaNum++
-        $linha = $_
-        $achou = $false
-        $tipo  = ""
+            foreach ($Chave in $PalavrasChave) {
 
-        if ($SearchPort -and $linha -match $SearchPort) {
-            $achou = $true
-            $tipo  = "Porta ($SearchPort)"
-        }
+                # Regex exato: palavra inteira ou número
+                if ($Chave -match '^\d+$') {
+                    $Regex = "(?<!\d)$Chave(?!\d)"
+                } else {
+                    $Regex = "\b$([regex]::Escape($Chave))\b"
+                }
 
-        if (-not $achou -and $SearchIP -and $linha -match $SearchIP) {
-            $achou = $true
-            $tipo  = "IP ($SearchIP)"
-        }
-
-        if (-not $achou) {
-            foreach ($chave in $SearchKey) {
-                if ($linha -match $chave) {
-                    $achou = $true
-                    $tipo  = "Chave ($chave)"
+                if ($LinhaTexto -imatch $Regex) {
+                    $Evidencia = [PSCustomObject]@{
+                        Linha    = $LinhaNum
+                        Chave    = $Chave
+                        Conteudo = $LinhaTexto
+                    }
                     break
                 }
             }
-        }
 
-        if ($achou) {
-            Write-Host "🔢 Linha $linhaNum :" -ForegroundColor Magenta
-            Write-Host "   $linha"
-            Write-Host "--------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "🧷 ATIVO   : $tipo" -ForegroundColor Green
-            Write-Host ""
+            if ($Evidencia) { return } # Para após encontrar a primeira ocorrência
         }
+    }
+    catch {
+        return
+    }
+
+    # Só mostra se encontrou algo e se DNS/IP/Porta/Chave não forem vazios
+    if ($Evidencia -and ($Evidencia.Chave -ne "" -and $Arquivo -ne $null)) {
+
+        $TipoArquivo = $Arquivo.Extension.TrimStart('.')
+
+        Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host (" Pasta .............: {0}" -f $Arquivo.DirectoryName) -ForegroundColor White
+        Write-Host (" Arquivo ...........: {0}" -f $Arquivo.Name)          -ForegroundColor White
+        Write-Host (" Tipo ..............: {0}" -f $TipoArquivo)          -ForegroundColor White
+        Write-Host (" Ultima Alteracao ..: {0}" -f $Arquivo.LastWriteTime) -ForegroundColor White
+        Write-Host ""
+
+        if ($DNSBusca -ne "") { Write-Host (" DNS ...............: {0}" -f $DNSBusca) -ForegroundColor Yellow }
+        if ($IPBusca  -ne "") { Write-Host (" IP ................: {0}" -f $IPBusca) -ForegroundColor Yellow }
+        if ($PortaBusca -ne "") { Write-Host (" Porta .............: {0}" -f $PortaBusca) -ForegroundColor Yellow }
+        if ($Evidencia.Chave -ne "") { Write-Host (" Chave .............: {0}" -f $Evidencia.Chave) -ForegroundColor Yellow }
+
+        Write-Host ""
+        Write-Host (" Linha .............: {0}" -f $Evidencia.Linha) -ForegroundColor Cyan
+        Write-Host (" Conteudo ..........: {0}" -f $Evidencia.Conteudo) -ForegroundColor Gray
+        Write-Host ""
     }
 }
 
-# ================================
-# Finalizacao
-# ================================
+# ================== FINAL ==================
+Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+Write-Host " ANALISE FINALIZADA" -ForegroundColor Cyan
+Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "+==========================================+" -ForegroundColor Green
-Write-Host "+      Varredura finalizada com sucesso    +" -ForegroundColor Green
-Write-Host "+==========================================+" -ForegroundColor Green
-Write-Host ""
-
-pause
