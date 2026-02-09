@@ -1,6 +1,5 @@
 Clear-Host
 
-# ================= ASCII =================
 Write-Host @"
  _      _     _          _______
 | |    (_)   | |        |__   __|
@@ -14,12 +13,12 @@ ListenTrace - Auditoria Correlacionada
 
 # ================= CONFIGURAÇÕES =================
 
-# 🔧 Critérios ("" ou $null para ignorar)
 $SearchPort = "443"
 $SearchIP   = "127.0.0.1"
 $SearchKey  = @("Porta","Port","Listen")
 
 $BasePath = "C:\Windows"
+
 $Extensions = @(
     "*.conf","*.cfg","*.ini","*.json","*.yaml","*.yml",
     "*.xml","*.env","*.log","*.py","*.js","*.txt"
@@ -29,44 +28,29 @@ $SnippetSize = 160
 
 # ================= REGEX =================
 
-$RegexRules = @()
+$Rules = @()
 
 if ($SearchPort) {
-    $RegexRules += @{
-        Name  = "Porta"
-        Regex = "(?i)\b$([regex]::Escape($SearchPort))\b"
-    }
+    $Rules += @{ Tipo="Porta"; Regex="(?i)\b$([regex]::Escape($SearchPort))\b" }
 }
 
 if ($SearchIP) {
-    $RegexRules += @{
-        Name  = "IP"
-        Regex = "(?i)\b$([regex]::Escape($SearchIP))\b"
-    }
+    $Rules += @{ Tipo="IP"; Regex="(?i)\b$([regex]::Escape($SearchIP))\b" }
 }
 
-if ($SearchKey -and $SearchKey.Count -gt 0) {
+if ($SearchKey.Count -gt 0) {
     $Keys = ($SearchKey | ForEach-Object { [regex]::Escape($_) }) -join "|"
-    $RegexRules += @{
-        Name  = "Chave"
-        Regex = "(?i)\b($Keys)\b"
-    }
-}
-
-if ($RegexRules.Count -eq 0) {
-    Write-Host "❌ Nenhum critério definido" -ForegroundColor Red
-    Pause
-    exit
+    $Rules += @{ Tipo="Chave"; Regex="(?i)\b($Keys)\b" }
 }
 
 # ================= HEADER =================
 
 Write-Host ""
-Write-Host "🔎 BUSCADOR ATIVO" -ForegroundColor White
+Write-Host "🔎 BUSCADOR ATIVO"
 Write-Host ""
-if ($SearchPort) { Write-Host "🟦 Porta : $SearchPort" -ForegroundColor Yellow }
-if ($SearchIP)   { Write-Host "🟨 IP    : $SearchIP" -ForegroundColor Green }
-if ($SearchKey)  { Write-Host "🟩 Chave : $($SearchKey -join ', ')" -ForegroundColor Cyan }
+Write-Host "🟦 Porta : $SearchPort" -ForegroundColor Yellow
+Write-Host "🟨 IP    : $SearchIP"   -ForegroundColor Green
+Write-Host "🟩 Chave : $($SearchKey -join ', ')" -ForegroundColor Cyan
 Write-Host "📂 Diretório: $BasePath"
 Write-Host "=================================================="
 Write-Host ""
@@ -77,14 +61,14 @@ Get-ChildItem $BasePath -Recurse -File -Include $Extensions -ErrorAction Silentl
 ForEach-Object {
 
     try {
-        $Content = Get-Content $_.FullName -Encoding UTF8 -ErrorAction Stop
+        $Lines = Get-Content $_.FullName -Encoding UTF8 -ErrorAction Stop
     } catch {
         return
     }
 
-    # 🔎 valida correlação (todas regras no mesmo arquivo)
-    foreach ($Rule in $RegexRules) {
-        if (-not ($Content -match $Rule.Regex)) {
+    # 🔒 correlação: todas regras precisam existir no arquivo
+    foreach ($Rule in $Rules) {
+        if (-not ($Lines -match $Rule.Regex)) {
             return
         }
     }
@@ -93,21 +77,20 @@ ForEach-Object {
     Write-Host "📄 Arquivo : $($_.Name)" -ForegroundColor Cyan
     Write-Host "--------------------------------------------------"
 
-    $LineNumber = 0
-    foreach ($Line in $Content) {
-        $LineNumber++
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
 
-        foreach ($Rule in $RegexRules) {
-            if ($Line -match $Rule.Regex) {
+        foreach ($Rule in $Rules) {
 
-                $Out = $Line.Trim()
+            if ($Lines[$i] -match $Rule.Regex) {
+
+                $Out = $Lines[$i].Trim()
                 if ($Out.Length -gt $SnippetSize) {
                     $Out = $Out.Substring(0,$SnippetSize) + "..."
                 }
 
-                Write-Host "🔢 Linha $LineNumber :" -ForegroundColor DarkGray
+                Write-Host "🔢 Linha $($i + 1) :" -ForegroundColor DarkGray
                 Write-Host "   $Out" -ForegroundColor White
-                Write-Host "🧷 ATIVO   : $($Rule.Name)" -ForegroundColor Yellow
+                Write-Host "🧷 ATIVO   : $($Rule.Tipo)" -ForegroundColor Yellow
                 Write-Host "--------------------------------------------------"
             }
         }
