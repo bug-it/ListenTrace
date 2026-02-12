@@ -66,40 +66,10 @@ $Extensoes = @(".exe",".sys",".dll",".ini")
 $MaxPorArquivo = 5
 $MaxFileSizeMB = 10
 
-# ================= FUNÇÕES CONSOLE =================
-function Write-Separador {
-    Write-Host "========================================================================" -ForegroundColor $CorSeparador
-}
-
-function Write-ConteudoColorido {
-    param([string]$Linha)
-
-    $pos = 0
-    $matches = [regex]::Matches($Linha, $RegexAll, 'IgnoreCase')
-
-    if ($matches.Count -eq 0) {
-        Write-Host $Linha -ForegroundColor $CorConteudo
-        return
-    }
-
-    foreach ($m in $matches) {
-        if ($m.Index -gt $pos) {
-            Write-Host $Linha.Substring($pos, $m.Index - $pos) -NoNewline -ForegroundColor $CorConteudo
-        }
-        Write-Host $m.Value -NoNewline -ForegroundColor $CorSenha
-        $pos = $m.Index + $m.Length
-    }
-
-    if ($pos -lt $Linha.Length) {
-        Write-Host $Linha.Substring($pos) -NoNewline -ForegroundColor $CorConteudo
-    }
-
-    Write-Host ""
-}
-
 # ================= RELATÓRIO HTML =================
 $DataExecucao = Get-Date
-$RelatorioPath = "$PSScriptRoot\Relatorio_ListentTrace_$($DataExecucao.ToString("yyyyMMdd_HHmmss")).html"
+$BasePath = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$RelatorioPath = Join-Path $BasePath "Relatorio_ListentTrace_$($DataExecucao.ToString('yyyyMMdd_HHmmss')).html"
 
 @"
 <!DOCTYPE html>
@@ -115,14 +85,10 @@ h2{margin:0;color:#0b3d91;}
 small{color:#555;}
 .status{margin-top:8px;font-weight:600;color:#1a7f37;}
 table{width:100%;border-collapse:collapse;font-size:14px;}
-th{background:#0b3d91;color:#ffffff;padding:10px;text-align:left;position:sticky;top:0;}
-td{padding:8px;border-bottom:1px solid #e0e0e0;vertical-align:top;}
-tr:hover{background:#f5f9ff;}
-td:nth-child(1){color:#333;font-weight:500;}
-td:nth-child(2){color:#1565c0;font-weight:600;}
-td:nth-child(3){text-align:center;font-weight:bold;color:#d32f2f;}
+th{background:#0b3d91;color:#ffffff;padding:10px;text-align:left;}
+td{padding:8px;border-bottom:1px solid #e0e0e0;}
 mark.senha{background:#ffd54f;padding:2px 4px;border-radius:4px;font-weight:bold;}
-pre{margin:0;font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:#000;}
+pre{margin:0;font-family:Consolas,monospace;white-space:pre-wrap;}
 .footer{margin-top:25px;padding-top:10px;border-top:2px solid #0b3d91;font-size:13px;color:#666;}
 </style>
 </head>
@@ -141,7 +107,33 @@ pre{margin:0;font-family:Consolas,monospace;white-space:pre-wrap;word-break:brea
 </tr>
 "@ | Out-File -Encoding UTF8 $RelatorioPath
 
-Start-Process $RelatorioPath
+Invoke-Item $RelatorioPath
+
+# ================= FUNÇÕES =================
+function Write-Separador {
+    Write-Host "========================================================================" -ForegroundColor $CorSeparador
+}
+
+function Write-ConteudoColorido {
+    param([string]$Linha)
+
+    $pos = 0
+    $matches = [regex]::Matches($Linha, $RegexAll, 'IgnoreCase')
+
+    foreach ($m in $matches) {
+        if ($m.Index -gt $pos) {
+            Write-Host $Linha.Substring($pos, $m.Index - $pos) -NoNewline -ForegroundColor $CorConteudo
+        }
+        Write-Host $m.Value -NoNewline -ForegroundColor $CorSenha
+        $pos = $m.Index + $m.Length
+    }
+
+    if ($pos -lt $Linha.Length) {
+        Write-Host $Linha.Substring($pos) -NoNewline -ForegroundColor $CorConteudo
+    }
+
+    Write-Host ""
+}
 
 # ================= EXECUÇÃO =================
 foreach ($Dir in $Diretorios) {
@@ -177,12 +169,13 @@ foreach ($Dir in $Diretorios) {
                 Write-Host ""
 
                 $ConteudoHtml = [System.Net.WebUtility]::HtmlEncode($Linhas[$i])
+
                 foreach ($p in $PALAVRAS) {
                     $ConteudoHtml = [regex]::Replace(
                         $ConteudoHtml,
                         [regex]::Escape($p),
-                        "<mark class='senha'>$p</mark>",
-                        "IgnoreCase"
+                        "<mark class=`"senha`">$p</mark>",
+                        [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
                     )
                 }
 
