@@ -178,12 +178,13 @@ foreach ($Dir in $Diretorios) {
 
                 $ConteudoHtml = [System.Net.WebUtility]::HtmlEncode($Linhas[$i])
                 foreach ($p in $PALAVRAS) {
-                    $ConteudoHtml = [regex]::Replace(
-                        $ConteudoHtml,
-                        [regex]::Escape($p),
-                        "<mark class='senha'>$p</mark>",
-                        "IgnoreCase"
-                    )
+                $ConteudoHtml = [regex]::Replace(
+                $ConteudoHtml,
+                [regex]::Escape($p),
+                "<mark class=`"senha`">$p</mark>",
+                [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+)
+
                 }
 
 @"
