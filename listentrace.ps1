@@ -1,3 +1,6 @@
+# FORÇA UTF-8 NO POWERSHELL 5.1 (mantém emojis funcionando)
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 Clear-Host
 $Host.UI.RawUI.WindowTitle = "ListentTrace :: Auditoria / Monitoramento"
 
@@ -57,7 +60,7 @@ $RegexAll = ($PALAVRAS | ForEach-Object { [regex]::Escape($_) }) -join "|"
 $TotalArquivosEncontrados = 0
 
 Write-Host "▸ Palavra Chave  : " -NoNewline -ForegroundColor $CorValor
-$PALAVRAS | ForEach-Object { Write-Host "$_ " -NoNewline -ForegroundColor $Cor }
+$PALAVRAS | ForEach-Object { Write-Host "$_ " -NoNewline -ForegroundColor $CorSenha }
 Write-Host "`n"
 
 # ================= CONFIG =================
@@ -66,7 +69,7 @@ $Extensoes = @(".exe",".sys",".dll",".ini")
 $MaxPorArquivo = 5
 $MaxFileSizeMB = 10
 
-# ================= FUNÇÕES CONSOLE =================
+# ================= FUNÇÕES =================
 function Write-Separador {
     Write-Host "========================================================================" -ForegroundColor $CorSeparador
 }
@@ -75,7 +78,7 @@ function Write-ConteudoColorido {
     param([string]$Linha)
 
     $pos = 0
-    $matches = [regex]::Matches($Linha, $RegexAll, 'IgnoreCase')
+    $matches = [regex]::Matches($Linha, $RegexAll, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
     if ($matches.Count -eq 0) {
         Write-Host $Linha -ForegroundColor $CorConteudo
@@ -86,7 +89,7 @@ function Write-ConteudoColorido {
         if ($m.Index -gt $pos) {
             Write-Host $Linha.Substring($pos, $m.Index - $pos) -NoNewline -ForegroundColor $CorConteudo
         }
-        Write-Host $m.Value -NoNewline -ForegroundColor $Cor
+        Write-Host $m.Value -NoNewline -ForegroundColor $CorSenha
         $pos = $m.Index + $m.Length
     }
 
@@ -96,52 +99,6 @@ function Write-ConteudoColorido {
 
     Write-Host ""
 }
-
-# ================= RELATÓRIO HTML =================
-$DataExecucao = Get-Date
-$RelatorioPath = "$PSScriptRoot\Relatorio_ListentTrace_$($DataExecucao.ToString("yyyyMMdd_HHmmss")).html"
-
-@"
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="5">
-<title>Relatório ListentTrace</title>
-<style>
-body{font-family:"Segoe UI",Arial,sans-serif;background:#ffffff;color:#000;margin:0;padding:30px;}
-.header{border-left:6px solid #0b3d91;padding-left:15px;margin-bottom:20px;}
-h2{margin:0;color:#0b3d91;}
-small{color:#555;}
-.status{margin-top:8px;font-weight:600;color:#1a7f37;}
-table{width:100%;border-collapse:collapse;font-size:14px;}
-th{background:#0b3d91;color:#ffffff;padding:10px;text-align:left;position:sticky;top:0;}
-td{padding:8px;border-bottom:1px solid #e0e0e0;vertical-align:top;}
-tr:hover{background:#f5f9ff;}
-td:nth-child(1){color:#333;font-weight:500;}
-td:nth-child(2){color:#1565c0;font-weight:600;}
-td:nth-child(3){text-align:center;font-weight:bold;color:#d32f2f;}
-mark.senha{background:#ffd54f;padding:2px 4px;border-radius:4px;font-weight:bold;}
-pre{margin:0;font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:#000;}
-.footer{margin-top:25px;padding-top:10px;border-top:2px solid #0b3d91;font-size:13px;color:#666;}
-</style>
-</head>
-<body>
-<div class="header">
-<h2>Relatório Listen Trace</h2>
-<small>Execução: $($DataExecucao.ToString("dd/MM/yyyy HH:mm:ss"))</small>
-<div class="status">Status: PROCESSANDO...</div>
-</div>
-<table>
-<tr>
-<th>Pasta</th>
-<th>Arquivo</th>
-<th>Linha</th>
-<th>Conteúdo</th>
-</tr>
-"@ | Out-File -Encoding UTF8 $RelatorioPath
-
-Start-Process $RelatorioPath
 
 # ================= EXECUÇÃO =================
 foreach ($Dir in $Diretorios) {
@@ -176,26 +133,6 @@ foreach ($Dir in $Diretorios) {
                 Write-ConteudoColorido $Linhas[$i]
                 Write-Host ""
 
-                $ConteudoHtml = [System.Net.WebUtility]::HtmlEncode($Linhas[$i])
-                foreach ($p in $PALAVRAS) {
-                $ConteudoHtml = [regex]::Replace(
-                $ConteudoHtml,
-                [regex]::Escape($p),
-                "<mark class=`"senha`">$p</mark>",
-                [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
-)
-
-                }
-
-@"
-<tr>
-<td>$($Arquivo.DirectoryName)</td>
-<td>$($Arquivo.Name)</td>
-<td>$($i + 1)</td>
-<td><pre>$ConteudoHtml</pre></td>
-</tr>
-"@ | Out-File -Append -Encoding UTF8 -FilePath $RelatorioPath
-
                 $TotalEncontrado++
                 $TotalArquivosEncontrados++
             }
@@ -203,20 +140,7 @@ foreach ($Dir in $Diretorios) {
     }
 }
 
-(Get-Content $RelatorioPath -Raw) -replace "Status: PROCESSANDO...", "Status: $TotalArquivosEncontrados ocorrência(s) encontrada(s)" |
-Set-Content -Encoding UTF8 $RelatorioPath
-
-@"
-</table>
-<div class="footer">
-Relatório gerado automaticamente pelo Listen Trace.
-</div>
-</body>
-</html>
-"@ | Out-File -Append -Encoding UTF8 $RelatorioPath
-
 Write-Host ""
-Write-Host "Relatório gerado com sucesso:" -ForegroundColor Green
-Write-Host $RelatorioPath -ForegroundColor Yellow
+Write-Host "Total de ocorrências encontradas: $TotalArquivosEncontrados" -ForegroundColor Green
 Write-Host "Pressione ENTER para sair..." -ForegroundColor Yellow
 Read-Host
