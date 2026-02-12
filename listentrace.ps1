@@ -1,4 +1,7 @@
+
 Clear-Host
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 $Host.UI.RawUI.WindowTitle = "ListentTrace :: Auditoria / Monitoramento"
 
 # ================= CORES =================
