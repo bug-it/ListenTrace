@@ -57,7 +57,7 @@ $RegexAll = ($PALAVRAS | ForEach-Object { [regex]::Escape($_) }) -join "|"
 $TotalArquivosEncontrados = 0
 
 Write-Host "▸ Palavra Chave  : " -NoNewline -ForegroundColor $CorValor
-$PALAVRAS | ForEach-Object { Write-Host "$_ " -NoNewline -ForegroundColor $CorSenha }
+$PALAVRAS | ForEach-Object { Write-Host "$_ " -NoNewline -ForegroundColor $Cor }
 Write-Host "`n"
 
 # ================= CONFIG =================
@@ -86,7 +86,7 @@ function Write-ConteudoColorido {
         if ($m.Index -gt $pos) {
             Write-Host $Linha.Substring($pos, $m.Index - $pos) -NoNewline -ForegroundColor $CorConteudo
         }
-        Write-Host $m.Value -NoNewline -ForegroundColor $CorSenha
+        Write-Host $m.Value -NoNewline -ForegroundColor $Cor
         $pos = $m.Index + $m.Length
     }
 
