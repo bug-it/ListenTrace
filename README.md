@@ -2,8 +2,9 @@
 
 🔍 Buscador Avançado de Configurações (PowerShell)
 
-<img width="1104" height="1022" alt="image" src="https://github.com/user-attachments/assets/8356047f-2573-4058-b936-3cd02160e777" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/3386ea29-6e81-4101-85ae-986cd4f89dd6" />
 
+<img width="1916" height="1031" alt="image" src="https://github.com/user-attachments/assets/3c7b319b-ff11-4134-9976-14a550071098" />
 
 Ferramenta em PowerShell para auditoria, troubleshooting e análise de arquivos de configuração, com correlação inteligente por arquivo e redução agressiva de falsos positivos.
 
