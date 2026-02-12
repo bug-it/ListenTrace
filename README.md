@@ -4,7 +4,7 @@
 Apresento o **Listen Trace**, um script em PowerShell voltado para análise forense e detecção de anomalias, capaz de varrer diretórios inteiros em busca de palavras-chave suspeitas.
 
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/3386ea29-6e81-4101-85ae-986cd4f89dd6" />
-</br>
+</br></br>
 <img width="1916" height="1031" alt="image" src="https://github.com/user-attachments/assets/3c7b319b-ff11-4134-9976-14a550071098" />
 
 
