@@ -24,29 +24,17 @@ Apresento o **Listen Trace**, um script em PowerShell voltado para análise fore
 
 💡 Simples, direto e eficiente para validar rapidamente possíveis rastros suspeitos no ambiente.
 ---
-📌 **Forma recomendada de utilização (evita problemas de codificação):**
+📌 Forma recomendada de utilização (evita problemas de codificação):
 
-Copie todo o conteúdo do script exibido.
+Abra o PowerShell ISE.
 
-Abra o Bloco de Notas (ou outro editor simples, como VS Code).
+Cole todo o conteúdo do script na janela do editor.
 
-Cole o conteúdo copiado.
+Clique em Salvar como e nomeie o arquivo como: ListenTrace.ps1
 
-Clique em "Salvar como".
+Após salvar, vá até o local onde o arquivo foi salvo, clique com o botão direito sobre ListenTrace.ps1 e selecione “Abrir com PowerShell”.
 
-No campo "Tipo", selecione "Todos os Arquivos".
-
-Nomeie o arquivo como: **listentrace.ps1**
-
-Em "Codificação", selecione **UTF-8**.
-
-Salve o arquivo.
-
-Após salvar, execute o script utilizando o comando abaixo no PowerShell:
-
-powershell -ExecutionPolicy Bypass -File ".\listentrace.ps1"
-
-Dessa forma, o script manterá a formatação correta e evitará erros causados por alteração automática de encoding durante o download.
+Dessa forma, o script manterá a formatação correta e evitará erros causados por alteração automática de codificação durante o download.
 ---
 🔗 Projeto em desenvolvimento – feedbacks são bem-vindos.
 
