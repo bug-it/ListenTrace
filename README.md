@@ -23,12 +23,7 @@ Apresento o **Listen Trace**, um script em PowerShell voltado para análise fore
 * Identificação precisa de ocorrências com linha e contexto
 
 💡 Simples, direto e eficiente para validar rapidamente possíveis rastros suspeitos no ambiente.
-
-📁 **Repositório GitHub:**
-https://github.com/bug-it/ListenTrace/blob/main/listentrace.ps1
-
 ---
-
 📌 **Forma recomendada de utilização (evita problemas de codificação):**
 
 Copie todo o conteúdo do script exibido.
@@ -52,11 +47,6 @@ Após salvar, execute o script utilizando o comando abaixo no PowerShell:
 powershell -ExecutionPolicy Bypass -File ".\listentrace.ps1"
 
 Dessa forma, o script manterá a formatação correta e evitará erros causados por alteração automática de encoding durante o download.
-
 ---
-
 🔗 Projeto em desenvolvimento – feedbacks são bem-vindos.
 
-#CyberSecurity #DFIR #ThreatHunting #PowerShell #ForenseDigital
-
-Atenciosamente.
