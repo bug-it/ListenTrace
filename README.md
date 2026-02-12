@@ -25,7 +25,7 @@ Apresento o **Listen Trace**, um script em PowerShell voltado para análise fore
 💡 Simples, direto e eficiente para validar rapidamente possíveis rastros suspeitos no ambiente.
 ---
 📌 Forma recomendada de utilização (evita problemas de codificação):
-
+---
 Abra o PowerShell ISE.
 
 Cole todo o conteúdo do script na janela do editor.
