@@ -130,7 +130,7 @@ pre{margin:0;font-family:Consolas,monospace;white-space:pre-wrap;word-break:brea
 <body>
 <div class="header">
 <h2>Relatório Listen Trace</h2>
-<small>Execução: $($DataExecucao.ToString("dd/MM/yyyy HH:mm:ss"))</small>
+<small>Execução: $($DataExecucao.ToString('dd/MM/yyyy HH:mm:ss'))</small>
 <div class="status">Status: PROCESSANDO...</div>
 </div>
 <table>
