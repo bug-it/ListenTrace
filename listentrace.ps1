@@ -100,7 +100,7 @@ function Write-ConteudoColorido {
 
 # ================= RELATÓRIO HTML =================
 $DataExecucao = Get-Date
-$RelatorioPath = "$PSScriptRoot\Relatorio_ListentTrace_$($DataExecucao.ToString("yyyyMMdd_HHmmss")).html"
+$RelatorioPath = "$PSScriptRoot\Relatorio_ListentTrace_$($DataExecucao.ToString('yyyyMMdd_HHmmss')).html"
 
 @"
 <!DOCTYPE html>
@@ -182,7 +182,7 @@ foreach ($Dir in $Diretorios) {
                     $ConteudoHtml = [regex]::Replace(
                         $ConteudoHtml,
                         [regex]::Escape($p),
-                        '<mark class='senha'>$p</mark>',
+                        "<mark class='senha'>$p</mark>",
                         "IgnoreCase"
                     )
                 }
