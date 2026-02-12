@@ -182,7 +182,7 @@ foreach ($Dir in $Diretorios) {
                     $ConteudoHtml = [regex]::Replace(
                         $ConteudoHtml,
                         [regex]::Escape($p),
-                        "<mark class='senha'>$p</mark>",
+                        '<mark class='senha'>$p</mark>',
                         "IgnoreCase"
                     )
                 }
